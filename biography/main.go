@@ -22,12 +22,12 @@ type Biography struct {
 	Information string
 }
 
-func NewBiography() Biography {
+func NewBiography() *Biography {
 	name := fmt.Sprintf("%s %s", Surname, Name)
 	birth, _ := time.Parse("2006-01-02", DateOfBirth)
 	age := GetAge(birth)
 
-	return Biography{
+	return &Biography{
 		Name:        name,
 		Age:         age,
 		Information: "",
@@ -51,52 +51,47 @@ func GetAge(birthdate time.Time) int {
 	return age
 }
 
-func (b Biography) Greetings(n Biography) Biography {
-	n.Information = fmt.Sprintf("Привіт, мене звати %s, мені %d.\n", b.Name, b.Age)
-	return n
+func (b *Biography) Greetings() *Biography {
+	b.Information = fmt.Sprintf("Привіт, мене звати %s, мені %d.\n", b.Name, b.Age)
+	return b
 }
 
-func (b Biography) isMarried(n Biography) Biography {
+func (b *Biography) isMarried() *Biography {
 	if isMarried {
-		n.Information += "Я одружений. \n"
+		b.Information += "Я одружений. \n"
 	} else {
-		n.Information += "Я не одружений. \n"
+		b.Information += "Я не одружений. \n"
 	}
-	return n
+	return b
 }
 
-func (b Biography) Children(n Biography) Biography {
+func (b *Biography) Children() *Biography {
 	if Children > 0 {
-		n.Information += fmt.Sprintf("У мене %d дітей.\n", Children)
+		b.Information += fmt.Sprintf("У мене %d дітей.\n", Children)
 	} else {
-		n.Information += "Дітей немає.\n"
+		b.Information += "Дітей немає.\n"
 	}
-	return n
+	return b
 }
 
-func (b Biography) Major(n Biography) Biography {
-	n.Information += fmt.Sprintf("%s.\n", Major)
-	return n
+func (b *Biography) Major() *Biography {
+	b.Information += fmt.Sprintf("%s.\n", Major)
+	return b
 }
 
-func (b Biography) Contacts(n Biography) Biography {
-	n.Information += "Мої контакти:"
+func (b *Biography) Contacts() *Biography {
+	b.Information += "Мої контакти:"
 	for _, number := range PhoneNumbers {
-		n.Information += fmt.Sprintf("\n%s", number)
+		b.Information += fmt.Sprintf("\n%s", number)
 	}
-	return n
+	return b
 }
 
-func (b Biography) String() string {
+func (b *Biography) String() string {
 	return b.Information
 }
 
 func PrintBiography() {
-	biography := NewBiography()
-	biography = biography.Greetings(biography)
-	biography = biography.isMarried(biography)
-	biography = biography.Children(biography)
-	biography = biography.Major(biography)
-	biography = biography.Contacts(biography)
+	biography := NewBiography().Greetings().isMarried().Children().Major().Contacts()
 	fmt.Println(biography)
 }
