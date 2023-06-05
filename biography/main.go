@@ -5,59 +5,54 @@ import (
 	"time"
 )
 
-const (
-	Name        string = "Кирило"
-	Surname     string = "Сулімовський"
-	DateOfBirth string = "1991-10-21"
-	Major       string = "Працюю на позиції програміста"
-	isMarried   bool   = true
-	Children    byte   = 0
-)
-
-var PhoneNumbers = []string{"+380671234567", "+380631234567"}
-
 type Biography struct {
-	Name        string
-	Age         int
-	Information string
+	Name         string
+	Age          int
+	Children     byte
+	Major        string
+	isMarried    bool
+	Information  string
+	PhoneNumbers []string
 }
 
-func NewBiography() *Biography {
+func NewBiography(Name string, Surname string) *Biography {
 	name := fmt.Sprintf("%s %s", Surname, Name)
-	birth, _ := time.Parse("2006-01-02", DateOfBirth)
-	age := GetAge(birth)
 
 	return &Biography{
 		Name:        name,
-		Age:         age,
 		Information: "",
 	}
 }
 
+func getYear(t time.Time) int {
+	year, _, _ := t.Date()
+	return year
+}
+
 func GetAge(birthdate time.Time) int {
 	today := time.Now()
-	ty, tm, td := today.Date()
-	today = time.Date(ty, tm, td, 0, 0, 0, 0, time.UTC)
-	by, bm, bd := birthdate.Date()
-	birthdate = time.Date(by, bm, bd, 0, 0, 0, 0, time.UTC)
+
 	if today.Before(birthdate) {
 		return 0
 	}
-	age := ty - by
+
+	age := getYear(today) - getYear(birthdate)
+
 	anniversary := birthdate.AddDate(age, 0, 0)
 	if anniversary.After(today) {
 		age--
 	}
+
 	return age
 }
 
-func (b *Biography) Greetings() *Biography {
+func (b *Biography) greetings() *Biography {
 	b.Information = fmt.Sprintf("Привіт, мене звати %s, мені %d.\n", b.Name, b.Age)
 	return b
 }
 
-func (b *Biography) isMarried() *Biography {
-	if isMarried {
+func (b *Biography) printIsMarried() *Biography {
+	if b.isMarried {
 		b.Information += "Я одружений. \n"
 	} else {
 		b.Information += "Я не одружений. \n"
@@ -65,25 +60,52 @@ func (b *Biography) isMarried() *Biography {
 	return b
 }
 
-func (b *Biography) Children() *Biography {
-	if Children > 0 {
-		b.Information += fmt.Sprintf("У мене %d дітей.\n", Children)
+func (b *Biography) SetChildren(Children byte) *Biography {
+	b.Children = Children
+	return b
+}
+
+func (b *Biography) printChildren() *Biography {
+	if b.Children > 0 {
+		b.Information += fmt.Sprintf("У мене %d дітей.\n", b.Children)
 	} else {
 		b.Information += "Дітей немає.\n"
 	}
 	return b
 }
 
-func (b *Biography) Major() *Biography {
-	b.Information += fmt.Sprintf("%s.\n", Major)
+func (b *Biography) SetMajor(Major string) *Biography {
+	b.Major = Major
 	return b
 }
 
-func (b *Biography) Contacts() *Biography {
+func (b *Biography) printMajor() *Biography {
+	b.Information += fmt.Sprintf("%s.\n", b.Major)
+	return b
+}
+
+func (b *Biography) AddPhoneNumber(PhoneNumber string) *Biography {
+	b.PhoneNumbers = append(b.PhoneNumbers, PhoneNumber)
+	return b
+}
+
+func (b *Biography) printContacts() *Biography {
 	b.Information += "Мої контакти:"
-	for _, number := range PhoneNumbers {
+	for _, number := range b.PhoneNumbers {
 		b.Information += fmt.Sprintf("\n%s", number)
 	}
+	return b
+}
+
+func (b *Biography) SetDateOfBirth(DateOfBirth string) *Biography {
+	birth, _ := time.Parse("2006-01-02", DateOfBirth)
+	age := GetAge(birth)
+	b.Age = age
+	return b
+}
+
+func (b *Biography) SetIsMarried(isMarried bool) *Biography {
+	b.isMarried = isMarried
 	return b
 }
 
@@ -91,7 +113,7 @@ func (b *Biography) String() string {
 	return b.Information
 }
 
-func PrintBiography() {
-	biography := NewBiography().Greetings().isMarried().Children().Major().Contacts()
-	fmt.Println(biography)
+func (b *Biography) PrintBiography() {
+	b.greetings().printMajor().printIsMarried().printChildren().printContacts()
+	fmt.Println(b)
 }
