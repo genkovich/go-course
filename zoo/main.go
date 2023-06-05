@@ -7,11 +7,15 @@ import (
 	"math/rand"
 )
 
-type Zookeeper struct {
-	Name    string
-	Cage    *Cage
+type stats struct {
 	Agility int
 	Luck    int
+}
+
+type Zookeeper struct {
+	Name string
+	Cage *Cage
+	stats
 }
 
 func (z *Zookeeper) catch(animal string, world *FreeWorld) {
@@ -81,15 +85,10 @@ type FreeWorld struct {
 	Animals map[string]Animal
 }
 
-type BigAnimal struct {
-	Animal
-}
-
 func CatchAnimals() {
 	zookeeper := Zookeeper{
-		Name:    "John",
-		Agility: 100,
-		Luck:    80,
+		Name:  "John",
+		stats: stats{Agility: 100, Luck: 50},
 	}
 
 	smallCage := Cage{
