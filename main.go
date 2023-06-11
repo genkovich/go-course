@@ -1,7 +1,11 @@
 package main
 
-import "course/zoo"
+import (
+	"course/mark_journal"
+	"course/text_editor"
+)
 
 func main() {
-	zoo.CatchAnimals()
+	text_editor.Start()
+	mark_journal.JournalStart()
 }
