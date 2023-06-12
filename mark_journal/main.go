@@ -21,6 +21,11 @@ type Student struct {
 	Surname string
 }
 
+type MarksIterator struct {
+	index int
+	marks []StudentMarks
+}
+
 func JournalStart() {
 	journal := Journal{
 		Subjects: []Subject{
@@ -58,14 +63,14 @@ func JournalStart() {
 							Name:    "John",
 							Surname: "Doe",
 						},
-						Marks: []float64{4.2, 3.2, 4.0, 4.1},
+						Marks: []float64{4.2, 5, 4.0, 4.1},
 					},
 					{
 						Student: Student{
 							Name:    "Alex",
 							Surname: "Smith",
 						},
-						Marks: []float64{4.0, 3.0, 4.5, 3.8},
+						Marks: []float64{4.0, 5, 4.5, 3.8},
 					},
 					{
 						Student: Student{
@@ -105,26 +110,85 @@ func JournalStart() {
 		},
 	}
 
-	fmt.Println("Average mark of Math", averageSubjectMark(journal.Subjects[0].Marks))
-	fmt.Println("Average mark of English", averageSubjectMark(journal.Subjects[1].Marks))
+	math := journal.GetMarksIteratorBySubject("Math")
+	fmt.Printf("Average mark of Math  %.2f\n", math.averageMark())
+	fmt.Printf("Sum of marks of Math  %.2f\n", math.sumOfMarks())
 
-	fmt.Println("Average mark John Doe by Math", averageMark(journal.Subjects[0].Marks[0].Marks))
-	fmt.Println("Average mark Alex Smith by Math", averageMark(journal.Subjects[0].Marks[1].Marks))
+	eng := journal.GetMarksIteratorBySubject("English")
+	fmt.Printf("Average mark of English  %.2f\n", eng.averageMark())
+	fmt.Printf("Sum of marks of English  %.2f\n", eng.sumOfMarks())
+
+	biology := journal.GetMarksIteratorBySubject("Biology")
+	fmt.Printf("Average mark of Biology  %.2f\n", biology.averageMark())
+	fmt.Printf("Sum of marks of Biology  %.2f\n", biology.sumOfMarks())
 
 }
 
-func averageMark(marks []float64) float64 {
-	var sum float64
-	for _, mark := range marks {
-		sum += mark
+func (j Journal) GetMarksIteratorBySubject(subjectTitle string) *MarksIterator {
+	for _, subject := range j.Subjects {
+		if subjectTitle == subject.Title {
+			return subject.createIterator()
+		}
 	}
-	return sum / float64(len(marks))
+
+	return nil
 }
 
-func averageSubjectMark(studentMarks []StudentMarks) float64 {
-	var sum float64
-	for _, mark := range studentMarks {
-		sum += averageMark(mark.Marks)
+func (subject *Subject) createIterator() *MarksIterator {
+	return &MarksIterator{
+		index: -1, // -1 because we need to call Next() before first iteration
+		marks: subject.Marks,
 	}
-	return sum / float64(len(studentMarks))
+}
+
+func (m *MarksIterator) HasNext() bool {
+	if m == nil {
+		return false
+	}
+
+	return m.index < len(m.marks)-1
+}
+
+func (m *MarksIterator) Next() *StudentMarks {
+	if !m.HasNext() {
+		return nil
+	}
+
+	m.index++
+	return &m.marks[m.index]
+}
+
+func (m *MarksIterator) Rewind() *StudentMarks {
+	if m == nil {
+		return nil
+	}
+	m.index = -1
+	return m.Next()
+}
+
+func (m *MarksIterator) averageMark() float64 {
+	m.Rewind()
+	var sum float64
+	var count int
+	for m.HasNext() {
+		mark := m.Next()
+		for _, studentMark := range mark.Marks {
+			sum += studentMark
+			count++
+		}
+	}
+	return sum / float64(count)
+}
+
+func (m *MarksIterator) sumOfMarks() float64 {
+	m.Rewind()
+	var sum float64
+	for m.HasNext() {
+		mark := m.Next()
+		for _, studentMark := range mark.Marks {
+			sum += studentMark
+		}
+	}
+	m.Rewind()
+	return sum
 }

@@ -20,17 +20,18 @@ func Start() {
 		"\nExcepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 
 	preparedText := NewText(userText)
-	preparedText.chunkOnRows()
 
 	emptyResult, _ := json.MarshalIndent(preparedText.rows, "", "  ")
 	fmt.Println(string(emptyResult))
 
-	preparedText.search("dolor")
+	substrings := preparedText.search("dolor")
 
+	printSlice(substrings)
 }
 
 func NewText(userText string) Text {
 	text := Text{originalText: userText}
+	text.chunkOnRows()
 
 	return text
 }
@@ -39,10 +40,21 @@ func (t *Text) chunkOnRows() {
 	t.rows = strings.Split(t.originalText, "\n")
 }
 
-func (t *Text) search(substr string) {
-	for i, row := range t.rows {
+func (t *Text) search(substr string) []string {
+	var result []string
+	for _, row := range t.rows {
 		if strings.Contains(row, substr) {
-			fmt.Printf("Match found on row %d: %s\n", i+1, row)
+			result = append(result, row)
 		}
 	}
+
+	return result
+}
+
+func printSlice(s []string) {
+	fmt.Printf("len=%d cap=%d\n", len(s), cap(s))
+	for _, item := range s {
+		fmt.Printf("Match found on: %s\n", item)
+	}
+
 }
