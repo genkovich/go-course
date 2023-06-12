@@ -8,23 +8,20 @@ import (
 	"fmt"
 )
 
-func buildStartStage() *StageStart {
-	return &StageStart{
-		Stage: stages.Stage{
-			Title:        "Привіт!",
-			Content:      "Радий вітати тебе в грі!",
-			OptionsTitle: "Що будемо робити?",
-			Options: map[string]string{
-				"start": "Почнемо!",
-				"exit":  "Якось потім...",
-			},
+func buildStage() *stages.Stage {
+	return &stages.Stage{
+		Title:        "Привіт!",
+		Content:      "Радий вітати тебе в грі!",
+		OptionsTitle: "Що будемо робити?",
+		Options: map[string]string{
+			"start": "Почнемо!",
+			"exit":  "Якось потім...",
 		},
+		PostStageRunFunc: nextStage,
 	}
 }
 
-func (s *StageStart) Run() {
-	selectedOption := s.Stage.Run()
-
+func nextStage(selectedOption string, nil *units.Player) {
 	switch selectedOption {
 	case "start":
 		fmt.Println("Введи своє їм'я")
@@ -32,18 +29,14 @@ func (s *StageStart) Run() {
 		var name string
 		fmt.Scan(&name)
 		player := units.CreatePlayer(name)
-
 		valley.Run(&player)
+
 	case "exit":
 		pkg.PrintText("До зустрічі!")
 	}
 }
 
-type StageStart struct {
-	stages.Stage
-}
-
 func Run() {
-	stage := buildStartStage()
-	stage.Run()
+	stage := buildStage()
+	stage.RunWithPostFunc(nil)
 }
