@@ -1,7 +1,7 @@
 package main
 
-import "course/new_world_game"
+import "course/tic_tac_toe"
 
 func main() {
-	new_world_game.NewWorldGameDemo()
+	tic_tac_toe.StartGame()
 }
