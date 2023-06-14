@@ -1,7 +1,7 @@
 package main
 
-import "course/zoo"
+import "course/new_world_game"
 
 func main() {
-	zoo.CatchAnimals()
+	new_world_game.NewWorldGameDemo()
 }
