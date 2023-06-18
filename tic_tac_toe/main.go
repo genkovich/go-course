@@ -45,11 +45,14 @@ func StartGame() {
 	field := createEmptyField()
 	field.Print()
 
-	symbol := "cross"
+	player := "cross"
+	gameLoop(player, field)
+}
 
+func gameLoop(player string, field Field) {
 	for {
-		fmt.Println("It's", symbol, "turn")
-		win, remakeMove := turn(symbol, field)
+		fmt.Println("It's", player, "turn")
+		win, remakeMove := playerTurn(player, field)
 
 		if win {
 			break
@@ -59,12 +62,11 @@ func StartGame() {
 			continue
 		}
 
-		symbol = changeSymbol(symbol)
-
+		player = changePlayer(player)
 	}
 }
 
-func changeSymbol(symbol string) string {
+func changePlayer(symbol string) string {
 	if symbol == "cross" {
 		return "naught"
 	}
@@ -72,8 +74,11 @@ func changeSymbol(symbol string) string {
 	return "cross"
 }
 
-func turn(symbol string, field Field) (bool, bool) {
+func playerTurn(player string, field Field) (bool, bool) {
 	var rowNumber int
+	isGameFinished := false
+	isTurnDone := false
+
 	fmt.Println("Please select a row between 1, 2, 3")
 	fmt.Scan(&rowNumber)
 
@@ -81,12 +86,13 @@ func turn(symbol string, field Field) (bool, bool) {
 	fmt.Println("Please select a column between 1, 2, 3")
 	fmt.Scan(&colNumber)
 
-	if !field.setSymbol(rowNumber, colNumber, symbol) {
-		return false, false
+	if field.setSymbol(rowNumber, colNumber, player) {
+		field.Print()
+		isGameFinished = field.checkWinner(player)
+		isTurnDone = true
 	}
 
-	field.Print()
-	return field.checkWinner(symbol), true
+	return isGameFinished, isTurnDone
 }
 
 func (f Field) setSymbol(rowNumber int, colNumber int, symbol string) bool {
@@ -131,7 +137,16 @@ func (f Field) checkWinner(symbol string) bool {
 		return true
 	}
 
-	if f[1][1] != "" && f[1][2] != "" && f[1][3] != "" && f[2][1] != "" && f[2][2] != "" && f[2][3] != "" && f[3][1] != "" && f[3][2] != "" && f[3][3] != "" {
+	draw := true
+	for i := 1; i <= 3; i++ {
+		for j := 1; j <= 3; j++ {
+			if f[i][j] == "" {
+				draw = false
+			}
+		}
+	}
+
+	if draw {
 		fmt.Println("It's a draw")
 		return true
 	}
