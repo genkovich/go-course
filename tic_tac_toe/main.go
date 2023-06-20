@@ -52,32 +52,42 @@ func StartGame() {
 func gameLoop(player string, field Field) {
 	for {
 		fmt.Println("It's", player, "turn")
-		win, remakeMove := playerTurn(player, field)
+		isTurnDone := playerTurn(player, field)
 
-		if win {
-			break
+		if !isTurnDone {
+			continue
 		}
 
-		if !remakeMove {
-			continue
+		isGameFinished, isDraw := field.checkWinner(player)
+
+		if isGameFinished {
+			printCongrats(player, isDraw)
+			break
 		}
 
 		player = changePlayer(player)
 	}
 }
 
-func changePlayer(symbol string) string {
-	if symbol == "cross" {
+func printCongrats(player string, isDraw bool) {
+	if isDraw {
+		fmt.Println("It's a draw")
+		return
+	}
+
+	fmt.Printf("Congratulations %s! You are winner!", player)
+}
+
+func changePlayer(player string) string {
+	if player == "cross" {
 		return "naught"
 	}
 
 	return "cross"
 }
 
-func playerTurn(player string, field Field) (bool, bool) {
+func playerTurn(player string, field Field) (isTurnDone bool) {
 	var rowNumber int
-	isGameFinished := false
-	isTurnDone := false
 
 	fmt.Println("Please select a row between 1, 2, 3")
 	fmt.Scan(&rowNumber)
@@ -88,11 +98,10 @@ func playerTurn(player string, field Field) (bool, bool) {
 
 	if field.setSymbol(rowNumber, colNumber, player) {
 		field.Print()
-		isGameFinished = field.checkWinner(player)
 		isTurnDone = true
 	}
 
-	return isGameFinished, isTurnDone
+	return isTurnDone
 }
 
 func (f Field) setSymbol(rowNumber int, colNumber int, symbol string) bool {
@@ -110,46 +119,39 @@ func (f Field) setSymbol(rowNumber int, colNumber int, symbol string) bool {
 	return true
 }
 
-func (f Field) checkWinner(symbol string) bool {
+func (f Field) checkWinner(player string) (isGameFinished bool, isDraw bool) {
+	isGameFinished = false
+	isDraw = false
+
 	for rowNumber := 1; rowNumber <= 3; rowNumber++ {
 		row := f[rowNumber]
-		if row[1] == symbol && row[2] == symbol && row[3] == symbol {
-			fmt.Println(symbol, "is the winner")
-			return true
-
+		if row[1] == player && row[2] == player && row[3] == player {
+			isGameFinished = true
 		}
 	}
 
 	for colNumber := 1; colNumber <= 3; colNumber++ {
-		if f[1][colNumber] == symbol && f[2][colNumber] == symbol && f[3][colNumber] == symbol {
-			fmt.Println(symbol, "is the winner")
-			return true
+		if f[1][colNumber] == player && f[2][colNumber] == player && f[3][colNumber] == player {
+			isGameFinished = true
 		}
 	}
 
-	if f[1][1] == symbol && f[2][2] == symbol && f[3][3] == symbol {
-		fmt.Println(symbol, "is the winner")
-		return true
+	if f[1][1] == player && f[2][2] == player && f[3][3] == player {
+		isGameFinished = true
 	}
 
-	if f[1][3] == symbol && f[2][2] == symbol && f[3][1] == symbol {
-		fmt.Println(symbol, "is the winner")
-		return true
+	if f[1][3] == player && f[2][2] == player && f[3][1] == player {
+		isGameFinished = true
 	}
 
-	draw := true
 	for i := 1; i <= 3; i++ {
 		for j := 1; j <= 3; j++ {
 			if f[i][j] == "" {
-				draw = false
+				isGameFinished = true
+				isDraw = true
 			}
 		}
 	}
 
-	if draw {
-		fmt.Println("It's a draw")
-		return true
-	}
-
-	return false
+	return isGameFinished, isDraw
 }
