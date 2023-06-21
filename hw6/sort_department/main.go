@@ -2,7 +2,6 @@ package sort_department
 
 import (
 	postPackage "course/hw6/sort_department/post_package"
-	"fmt"
 )
 
 type SortDepartment struct {
@@ -11,8 +10,7 @@ type SortDepartment struct {
 
 func (s SortDepartment) SendAll() {
 	for _, post := range s.postPackages {
-		transport := postPackage.PickTransport(post)
-		fmt.Printf("Send %s from %s to %s by %s\n", post.GetType(), post.SenderAddress(), post.ReceiverAddress(), transport)
+		post.Send()
 	}
 }
 
