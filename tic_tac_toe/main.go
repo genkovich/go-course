@@ -4,6 +4,16 @@ import "fmt"
 
 type Field map[int]map[int]string
 
+type Game struct {
+	field         Field
+	currentPlayer string
+}
+
+const (
+	PlayerCross  = "cross"
+	PlayerNaught = "naught"
+)
+
 func createEmptyField() Field {
 	field := make(Field, 3)
 
@@ -24,84 +34,21 @@ func (f Field) Print() {
 		rowString := fmt.Sprintf("%d: ", rowNumber)
 		for colNumber := 1; colNumber <= 3; colNumber++ {
 			value := row[colNumber]
-			rowString += getSymbol(value)
+			rowString += f.printSymbol(value)
 		}
 		fmt.Println(rowString)
 	}
 }
 
-func getSymbol(value string) string {
+func (f Field) printSymbol(value string) string {
 	switch value {
-	case "cross":
+	case PlayerCross:
 		return "X"
-	case "naught":
+	case PlayerNaught:
 		return "0"
 	default:
 		return "□"
 	}
-}
-
-func StartGame() {
-	field := createEmptyField()
-	field.Print()
-
-	player := "cross"
-	gameLoop(player, field)
-}
-
-func gameLoop(player string, field Field) {
-	for {
-		fmt.Println("It's", player, "turn")
-		isTurnDone := playerTurn(player, field)
-
-		if !isTurnDone {
-			continue
-		}
-
-		isGameFinished, isDraw := field.checkWinner(player)
-
-		if isGameFinished {
-			printCongrats(player, isDraw)
-			break
-		}
-
-		player = changePlayer(player)
-	}
-}
-
-func printCongrats(player string, isDraw bool) {
-	if isDraw {
-		fmt.Println("It's a draw")
-		return
-	}
-
-	fmt.Printf("Congratulations %s! You are winner!", player)
-}
-
-func changePlayer(player string) string {
-	if player == "cross" {
-		return "naught"
-	}
-
-	return "cross"
-}
-
-func playerTurn(player string, field Field) (isTurnDone bool) {
-	var rowNumber int
-
-	fmt.Println("Please select a row between 1, 2, 3")
-	fmt.Scan(&rowNumber)
-
-	var colNumber int
-	fmt.Println("Please select a column between 1, 2, 3")
-	fmt.Scan(&colNumber)
-
-	if field.setSymbol(rowNumber, colNumber, player) {
-		field.Print()
-		isTurnDone = true
-	}
-
-	return isTurnDone
 }
 
 func (f Field) setSymbol(rowNumber int, colNumber int, symbol string) bool {
@@ -119,38 +66,111 @@ func (f Field) setSymbol(rowNumber int, colNumber int, symbol string) bool {
 	return true
 }
 
-func (f Field) checkWinner(player string) (isGameFinished bool, isDraw bool) {
+func StartGame() {
+	field := createEmptyField()
+	field.Print()
+	player := PlayerCross
+
+	game := Game{
+		field:         field,
+		currentPlayer: player,
+	}
+
+	game.run()
+}
+
+func (g *Game) run() {
+	for {
+		fmt.Println("It's", g.currentPlayer, "turn")
+		isTurnDone := g.playerTurn()
+
+		if !isTurnDone {
+			continue
+		}
+
+		isGameFinished, isDraw := g.checkWinner()
+
+		if isGameFinished {
+			g.printCongrats(isDraw)
+			break
+		}
+
+		g.changeCurrentPlayer()
+	}
+}
+
+func (g *Game) printCongrats(isDraw bool) {
+	if isDraw {
+		fmt.Println("It's a draw")
+		return
+	}
+
+	fmt.Printf("Congratulations %s! You are winner!", g.currentPlayer)
+}
+
+func (g *Game) changeCurrentPlayer() {
+	if g.currentPlayer == PlayerCross {
+		g.currentPlayer = PlayerNaught
+	} else {
+		g.currentPlayer = PlayerCross
+	}
+}
+
+func (g *Game) playerTurn() (isTurnDone bool) {
+	var rowNumber int
+
+	fmt.Println("Please select a row between 1, 2, 3")
+	fmt.Scan(&rowNumber)
+
+	var colNumber int
+	fmt.Println("Please select a column between 1, 2, 3")
+	fmt.Scan(&colNumber)
+
+	if g.field.setSymbol(rowNumber, colNumber, g.currentPlayer) {
+		g.field.Print()
+		isTurnDone = true
+	}
+
+	return isTurnDone
+}
+
+func (g *Game) checkWinner() (isGameFinished bool, isDraw bool) {
 	isGameFinished = false
 	isDraw = false
 
 	for rowNumber := 1; rowNumber <= 3; rowNumber++ {
-		row := f[rowNumber]
-		if row[1] == player && row[2] == player && row[3] == player {
+		row := g.field[rowNumber]
+		if row[1] == g.currentPlayer && row[2] == g.currentPlayer && row[3] == g.currentPlayer {
 			isGameFinished = true
 		}
 	}
 
 	for colNumber := 1; colNumber <= 3; colNumber++ {
-		if f[1][colNumber] == player && f[2][colNumber] == player && f[3][colNumber] == player {
+		if g.field[1][colNumber] == g.currentPlayer && g.field[2][colNumber] == g.currentPlayer && g.field[3][colNumber] == g.currentPlayer {
 			isGameFinished = true
 		}
 	}
 
-	if f[1][1] == player && f[2][2] == player && f[3][3] == player {
+	if g.field[1][1] == g.currentPlayer && g.field[2][2] == g.currentPlayer && g.field[3][3] == g.currentPlayer {
 		isGameFinished = true
 	}
 
-	if f[1][3] == player && f[2][2] == player && f[3][1] == player {
+	if g.field[1][3] == g.currentPlayer && g.field[2][2] == g.currentPlayer && g.field[3][1] == g.currentPlayer {
 		isGameFinished = true
 	}
 
+	count := 0
 	for i := 1; i <= 3; i++ {
 		for j := 1; j <= 3; j++ {
-			if f[i][j] == "" {
-				isGameFinished = true
-				isDraw = true
+			if g.field[i][j] != "" {
+				count++
 			}
 		}
+	}
+
+	if count >= 9 && !isGameFinished {
+		isGameFinished = true
+		isDraw = true
 	}
 
 	return isGameFinished, isDraw
