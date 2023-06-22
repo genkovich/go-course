@@ -6,12 +6,14 @@ import (
 )
 
 type Plane struct {
-	title      string
-	capacity   int
-	passengers map[string]passenger.Passenger
-	speed      int
-	maxSpeed   int
-	minSpeed   int
+	title          string
+	capacity       int
+	passengers     map[string]passenger.Passenger
+	speed          int
+	maxSpeed       int
+	minSpeed       int
+	bookingList    map[string]string
+	parachuteCount int
 }
 
 func (p *Plane) Move() {
@@ -19,6 +21,10 @@ func (p *Plane) Move() {
 }
 
 func (p *Plane) Stop() {
+	if p.speed > p.minSpeed {
+		fmt.Printf("You can`t stop the plane, please reduce the speed\n")
+		return
+	}
 	p.speed = 0
 }
 
@@ -37,6 +43,11 @@ func (p *Plane) ChangeSpeed(speed int) {
 }
 
 func (p *Plane) PickUp(passenger passenger.Passenger) {
+	if _, ok := p.bookingList[passenger.Id]; !ok {
+		fmt.Printf("%s is not booked on the plane\n", passenger.LastName)
+		return
+	}
+
 	if _, ok := p.passengers[passenger.Id]; ok {
 		fmt.Printf("%s is already on the plane\n", passenger.LastName)
 		return
@@ -53,13 +64,26 @@ func (p *Plane) PickUp(passenger passenger.Passenger) {
 }
 
 func (p *Plane) DropOff(passenger passenger.Passenger) {
+	if p.speed > 0 && p.parachuteCount <= 0 {
+		fmt.Printf("You can`t drop off the plane without parachute, please stop the plane\n")
+		return
+	}
+
 	if _, ok := p.passengers[passenger.Id]; !ok {
 		fmt.Printf("%s is not on the plane\n", passenger.LastName)
 		return
 	}
 
 	delete(p.passengers, passenger.Id)
-	fmt.Printf("%s left the plane\n", passenger.LastName)
+
+	if p.speed > 0 {
+		p.parachuteCount--
+		fmt.Printf("%s left the plane with parachute\n", passenger.LastName)
+		return
+	} else {
+		fmt.Printf("%s left the plane\n", passenger.LastName)
+
+	}
 }
 
 func (p *Plane) Title() string {

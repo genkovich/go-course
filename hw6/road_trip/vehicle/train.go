@@ -33,10 +33,22 @@ func (t *Train) ChangeSpeed(speed int) {
 		return
 	}
 
-	t.speed = speed
+	if speed > t.speed {
+		t.speed += int(float64(t.maxSpeed) * 0.1)
+		fmt.Printf("The train is moving at %d\n", t.speed)
+	} else {
+		t.speed -= int(float64(t.maxSpeed) * 0.1)
+		fmt.Printf("The train is moving at %d\n", t.speed)
+	}
+
 }
 
 func (t *Train) PickUp(passenger passenger.Passenger) {
+	if speed := t.speed; speed > 0 {
+		fmt.Printf("The train is moving, %s can't board\n", passenger.LastName)
+		return
+	}
+
 	if _, ok := t.passengers[passenger.Id]; ok {
 		fmt.Printf("%s is already on the train\n", passenger.LastName)
 		return
@@ -52,6 +64,11 @@ func (t *Train) PickUp(passenger passenger.Passenger) {
 }
 
 func (t *Train) DropOff(passenger passenger.Passenger) {
+	if t.speed > 0 {
+		fmt.Printf("The train is moving, %s can't leave\n", passenger.LastName)
+		return
+	}
+
 	if _, ok := t.passengers[passenger.Id]; !ok {
 		fmt.Printf("%s is not on the train\n", passenger.LastName)
 		return

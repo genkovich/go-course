@@ -44,7 +44,15 @@ func (r *RoadRoute) StartTrip(passenger passenger.Passenger) {
 	for _, v := range r.vehicles {
 		v.PickUp(passenger)
 		v.Move()
+		if v.Title() == "UZ" {
+			v.ChangeSpeed(100)
+			v.ChangeSpeed(100)
+		}
 		fmt.Printf("%s covered %d by %s\n", passenger.LastName, v.duration, v.Title())
+		if v.Title() == "Boeing" {
+			v.DropOff(passenger)
+			v.ChangeSpeed(100)
+		}
 		v.Stop()
 		v.DropOff(passenger)
 	}
