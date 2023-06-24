@@ -1,7 +1,11 @@
 package main
 
-import "course/tic_tac_toe"
+import (
+	"course/hw6/road_trip"
+	"course/hw6/sort_department"
+)
 
 func main() {
-	tic_tac_toe.StartGame()
+	sort_department.Start()
+	road_trip.StartTrip()
 }

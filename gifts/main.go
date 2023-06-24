@@ -1,0 +1,5 @@
+package gifts
+
+func Start() {
+
+}
