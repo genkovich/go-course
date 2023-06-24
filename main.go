@@ -1,11 +1,11 @@
 package main
 
 import (
-	"course/hw6/road_trip"
-	"course/hw6/sort_department"
+	"course/hw7/average"
+	"course/hw7/minmax"
 )
 
 func main() {
-	sort_department.Start()
-	road_trip.StartTrip()
+	average.StartProcess()
+	minmax.StartProcess()
 }
