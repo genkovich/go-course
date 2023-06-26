@@ -1,50 +1,79 @@
 package video_game
 
 import (
-	"context"
 	"fmt"
+	"sync"
 	"time"
 )
 
 type Game struct {
-	players      map[int]*Player
-	questionPack QuestionPack
+	players            map[int]*Player
+	questionPack       QuestionPack
+	roundResultChannel chan []PlayerAnswer
+	answersChannel     chan PlayerAnswer
 }
 
-var answersChannel chan PlayerAnswer
-var gameChannel chan []PlayerAnswer
-
 func Run() {
-	answersChannel = make(chan PlayerAnswer)
-	gameChannel = make(chan []PlayerAnswer)
+	answerChannel := make(chan PlayerAnswer)
 	game := Game{
-		players:      generatePlayers(3),
-		questionPack: GenerateQuestionPack(),
+		players:            generatePlayers(3, answerChannel),
+		questionPack:       GenerateQuestionPack(),
+		roundResultChannel: make(chan []PlayerAnswer),
+		answersChannel:     answerChannel,
 	}
 	game.startGame()
 }
 
 func (g Game) startGame() {
-	for _, question := range g.questionPack.questions {
-		ctxWithQuestion := context.WithValue(context.Background(), "question", question)
-		ctxTimeout, cancel := context.WithTimeout(ctxWithQuestion, time.Second*10)
-		go collectAnswers(ctxTimeout)
-		defer cancel()
+	fmt.Println("Game Started")
 
-		for _, player := range g.players {
-			ctxWithPlayer := context.WithValue(ctxTimeout, "playerId", player.id)
-			go showQuestion(ctxWithPlayer)
-		}
+	ticker := time.NewTicker(10 * time.Second)
+	go g.collectAnswers(ticker)
 
-		<-ctxTimeout.Done()
-		fmt.Printf("Time is over. Correct answer is %s\n", question.variants[question.answerNumber])
-
-		playersAnswers := <-gameChannel
-
-		g.roundResults(playersAnswers, question)
+	for _, player := range g.players {
+		go player.showQuestion()
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go g.sendQuestions(&wg)
+
+	wg.Wait()
 	g.gameResults()
+}
+
+func (g Game) sendQuestions(wg *sync.WaitGroup) {
+	for _, question := range g.questionPack.questions {
+		fmt.Println("Question:", question)
+		for _, player := range g.players {
+			player.playerQuestionChannel <- question
+		}
+
+		roundResult := <-g.roundResultChannel
+
+		g.roundResults(roundResult, question)
+	}
+	wg.Done()
+}
+
+func (g Game) timeIsOver(roundResult []PlayerAnswer) {
+
+}
+
+func (g Game) collectAnswers(ticker *time.Ticker) {
+	var roundResult []PlayerAnswer
+
+	for {
+		select {
+		case <-ticker.C:
+			fmt.Println("Round over")
+			g.roundResultChannel <- roundResult
+			roundResult = nil
+		case playerAnswer := <-g.answersChannel:
+			roundResult = append(roundResult, playerAnswer)
+		}
+	}
 }
 
 func (g Game) roundResults(playersAnswers []PlayerAnswer, question Question) {
@@ -57,35 +86,11 @@ func (g Game) roundResults(playersAnswers []PlayerAnswer, question Question) {
 			fmt.Println("Player", playerAnswer.playerId, "answered incorrectly")
 		}
 	}
-	fmt.Println("Round over")
 }
 
 func (g Game) gameResults() {
 	fmt.Println("Game over")
-
 	for _, player := range g.players {
 		fmt.Println(player.name, "has", player.points, "points")
 	}
-}
-
-func showQuestion(ctx context.Context) {
-	question := ctx.Value("question")
-	fmt.Println("Question:", question, "Player:", ctx.Value("playerId"), "started")
-	go generateAnswer(ctx)
-}
-
-func collectAnswers(ctx context.Context) {
-	var roundResult []PlayerAnswer
-
-	for {
-		select {
-		case <-ctx.Done():
-			gameChannel <- roundResult
-			return
-		case answer := <-answersChannel:
-			fmt.Println("Player", answer.playerId, "on time")
-			roundResult = append(roundResult, answer)
-		}
-	}
-
 }
