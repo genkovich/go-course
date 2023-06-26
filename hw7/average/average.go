@@ -6,16 +6,16 @@ import (
 )
 
 type Process struct {
-	averageChannel chan int
-	printChannel   chan int
-	syncChannel    chan bool
+	randNumberChannel chan int
+	resultsChannel    chan int
+	syncChannel       chan bool
 }
 
 func StartProcess() {
 	process := Process{
-		averageChannel: make(chan int),
-		printChannel:   make(chan int),
-		syncChannel:    make(chan bool),
+		randNumberChannel: make(chan int),
+		resultsChannel:    make(chan int),
+		syncChannel:       make(chan bool),
 	}
 
 	go process.printAverage()
@@ -30,7 +30,7 @@ func (p Process) generateRandomNumbers(count int) {
 	for i := 0; i < count; i++ {
 		randNumber := rand.Intn(100)
 		fmt.Println("Generated random number: ", randNumber, " from goroutine: ", "goroutine")
-		p.averageChannel <- randNumber
+		p.randNumberChannel <- randNumber
 	}
 	fmt.Println("Try to close average channel")
 	p.CloseAverage()
@@ -41,19 +41,17 @@ func (p Process) average() {
 	count := 0
 
 	for {
-		for {
-			select {
-			case number, ok := <-p.averageChannel:
-				if ok {
-					fmt.Println("Received number: ", number, " from goroutine: ", "average")
-					sum += number
-					count++
-					p.printChannel <- sum / count
-				} else {
-					fmt.Println("Try to close print channel")
-					p.ClosePrint()
-					return
-				}
+		select {
+		case number, ok := <-p.randNumberChannel:
+			if ok {
+				fmt.Println("Received number: ", number, " from goroutine: ", "average")
+				sum += number
+				count++
+				p.resultsChannel <- sum / count
+			} else {
+				fmt.Println("Try to close print channel")
+				p.ClosePrint()
+				return
 			}
 		}
 	}
@@ -63,7 +61,7 @@ func (p Process) average() {
 func (p Process) printAverage() {
 	for {
 		select {
-		case res, ok := <-p.printChannel:
+		case res, ok := <-p.resultsChannel:
 			if ok {
 				fmt.Println("Average: ", res, " from goroutine: ", "printAverage")
 			} else {
@@ -76,9 +74,9 @@ func (p Process) printAverage() {
 }
 
 func (p Process) CloseAverage() {
-	close(p.averageChannel)
+	close(p.randNumberChannel)
 }
 
 func (p Process) ClosePrint() {
-	close(p.printChannel)
+	close(p.resultsChannel)
 }
