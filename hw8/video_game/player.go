@@ -10,6 +10,7 @@ type Player struct {
 	id                    int
 	name                  string
 	points                int
+	isActive              bool
 	playerQuestionChannel chan Question
 	answerChannel         chan PlayerAnswer
 }
@@ -21,6 +22,7 @@ func generatePlayers(playersCount int, answerChannel chan PlayerAnswer) map[int]
 			id:                    i,
 			name:                  fmt.Sprintf("Player %d", i),
 			points:                0,
+			isActive:              true,
 			playerQuestionChannel: make(chan Question),
 			answerChannel:         answerChannel,
 		}
@@ -35,16 +37,16 @@ func (p *Player) AddPoint() {
 func (p *Player) generateAnswer(question Question) {
 	min := 1
 	max := 4
-	thinkingTime := time.Second * time.Duration(rand.Intn(5)+1)
+	thinkingTime := time.Second * time.Duration(rand.Intn(12)+1)
 
 	playerAnswer := PlayerAnswer{
 		playerId: p.id,
 		answer:   rand.Intn(max-min) + min,
+		question: question,
 	}
 
 	select {
 	case <-time.After(thinkingTime):
-		fmt.Println("Player", playerAnswer.playerId, "answered", question.variants[playerAnswer.answer], "on question", question)
 		p.answerChannel <- playerAnswer
 	}
 

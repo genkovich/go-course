@@ -24,7 +24,7 @@ func Run() {
 	game.startGame()
 }
 
-func (g Game) startGame() {
+func (g *Game) startGame() {
 	fmt.Println("Game Started")
 
 	ticker := time.NewTicker(10 * time.Second)
@@ -43,11 +43,13 @@ func (g Game) startGame() {
 	g.gameResults()
 }
 
-func (g Game) sendQuestions(wg *sync.WaitGroup) {
+func (g *Game) sendQuestions(wg *sync.WaitGroup) {
 	for _, question := range g.questionPack.questions {
 		fmt.Println("Question:", question)
 		for _, player := range g.players {
-			player.playerQuestionChannel <- question
+			if player.isActive {
+				player.playerQuestionChannel <- question
+			}
 		}
 
 		roundResult := <-g.roundResultChannel
@@ -57,27 +59,50 @@ func (g Game) sendQuestions(wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-func (g Game) timeIsOver(roundResult []PlayerAnswer) {
+func isPlayerAnswered(playerId int, roundResult []PlayerAnswer) bool {
+	for _, playerAnswer := range roundResult {
+		if playerAnswer.playerId == playerId {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *Game) timeIsOver(roundResult []PlayerAnswer) {
+	fmt.Println("Round over")
+	for _, player := range g.players {
+		if !isPlayerAnswered(player.id, roundResult) {
+			fmt.Println("Player", player.id, "didn't answer and left the game")
+			player.isActive = false
+		}
+	}
+
+	g.roundResultChannel <- roundResult
 
 }
 
-func (g Game) collectAnswers(ticker *time.Ticker) {
+func (g *Game) collectAnswers(ticker *time.Ticker) {
 	var roundResult []PlayerAnswer
 
 	for {
 		select {
 		case <-ticker.C:
-			fmt.Println("Round over")
-			g.roundResultChannel <- roundResult
+			g.timeIsOver(roundResult)
 			roundResult = nil
 		case playerAnswer := <-g.answersChannel:
-			roundResult = append(roundResult, playerAnswer)
+			if g.players[playerAnswer.playerId].isActive {
+				fmt.Println("Player", playerAnswer.playerId, "answered", playerAnswer.question.variants[playerAnswer.answer], "on question", playerAnswer.question)
+				roundResult = append(roundResult, playerAnswer)
+			}
 		}
 	}
 }
 
-func (g Game) roundResults(playersAnswers []PlayerAnswer, question Question) {
+func (g *Game) roundResults(playersAnswers []PlayerAnswer, question Question) {
 	for _, playerAnswer := range playersAnswers {
+		if !g.players[playerAnswer.playerId].isActive {
+			continue
+		}
 		if playerAnswer.answer == question.answerNumber {
 			fmt.Println("Player", playerAnswer.playerId, "answered correctly")
 			g.players[playerAnswer.playerId].AddPoint()
@@ -88,7 +113,7 @@ func (g Game) roundResults(playersAnswers []PlayerAnswer, question Question) {
 	}
 }
 
-func (g Game) gameResults() {
+func (g *Game) gameResults() {
 	fmt.Println("Game over")
 	for _, player := range g.players {
 		fmt.Println(player.name, "has", player.points, "points")
