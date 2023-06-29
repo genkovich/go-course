@@ -35,6 +35,5 @@ func (h *Handler) GetTasksByDate(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewHandler() Handler {
-	taskStorage := NewTaskStorage()
-	return Handler{storage: taskStorage}
+	return Handler{storage: NewTaskStorage()}
 }

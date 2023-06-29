@@ -3,9 +3,9 @@ package task
 import "time"
 
 type Task struct {
-	Id    int
-	Title string
-	Date  time.Time
+	Id    int       `json:"id"`
+	Title string    `json:"title"`
+	Date  time.Time `json:"date"`
 }
 
 type Provider interface {
