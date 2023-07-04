@@ -1,27 +1,12 @@
 package student
 
-import "errors"
-
-type Student struct {
-	Id        int    `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Age       int    `json:"age"`
-	Gender    string `json:"gender"`
-	Class     string `json:"class"`
-}
-
-type ClassStatistic struct {
-	Class      string  `json:"class"`
-	AverageAge float64 `json:"average_age"`
-	BoysCount  int     `json:"boys_count"`
-	GirlsCount int     `json:"girls_count"`
-}
+import (
+	"errors"
+)
 
 type Provider interface {
 	GetStudentsByClass(class string) []Student
-	GetStudentById(id int) Student
-	GetClassStatistic(class string) ClassStatistic
+	GetStudentById(id int) (Student, error)
 }
 
 type Storage struct {
@@ -62,40 +47,11 @@ func (s *Storage) GetStudentsByClass(class string) []Student {
 }
 
 func (s *Storage) GetStudentById(id int) (Student, error) {
-	// map is better, but I understand that after geretaing random students :)
+	// map is better, but I understand that after generating random students :)
 	for _, student := range s.students {
 		if student.Id == id {
 			return student, nil
 		}
 	}
 	return Student{}, errors.New("student not found")
-}
-
-func (s *Storage) GetClassStatistic(class string) ClassStatistic {
-	students := s.GetStudentsByClass(class)
-
-	if len(students) == 0 {
-		return ClassStatistic{Class: class}
-	}
-
-	boysCount := 0
-	girlsCount := 0
-	averageAge := 0.0
-	sumAge := 0
-	for _, student := range students {
-		if student.Gender == "male" {
-			boysCount++
-		} else {
-			girlsCount++
-		}
-		sumAge += student.Age
-	}
-	averageAge = float64(sumAge) / float64(len(students))
-
-	return ClassStatistic{
-		Class:      class,
-		AverageAge: averageAge,
-		BoysCount:  boysCount,
-		GirlsCount: girlsCount,
-	}
 }
