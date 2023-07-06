@@ -1,9 +1,9 @@
 package hw9
 
 import (
+	"context"
 	"course/hw9/class"
 	"course/hw9/student"
-	"course/hw9/teacher"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -14,14 +14,12 @@ import (
 type Handler struct {
 	studentStorage *student.Storage
 	classStorage   *class.Storage
-	currentTeacher *teacher.Teacher
 }
 
 func NewHandler() Handler {
 	return Handler{
 		studentStorage: student.NewStudentStorage(),
 		classStorage:   class.NewClassStorage(),
-		currentTeacher: &teacher.Teacher{},
 	}
 }
 
@@ -36,7 +34,7 @@ func (h *Handler) GetStudentsByClass(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.classStorage.IsTeacherResponsibility(classTitle, h.currentTeacher.Username) {
+	if !h.classStorage.IsTeacherResponsibility(classTitle, r.Context().Value("teacher").(string)) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
@@ -66,7 +64,7 @@ func (h *Handler) GetStudentById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.classStorage.IsTeacherResponsibility(student.Class, h.currentTeacher.Username) {
+	if !h.classStorage.IsTeacherResponsibility(student.Class, r.Context().Value("teacher").(string)) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
@@ -86,7 +84,7 @@ func (h *Handler) GetClassStatistic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.classStorage.IsTeacherResponsibility(classTitle, h.currentTeacher.Username) {
+	if !h.classStorage.IsTeacherResponsibility(classTitle, r.Context().Value("teacher").(string)) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
@@ -112,8 +110,9 @@ func (h *Handler) AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		h.currentTeacher = &t
+		ctx := context.WithValue(r.Context(), "teacher", t.Username)
+		newReq := r.WithContext(ctx)
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, newReq)
 	})
 }
