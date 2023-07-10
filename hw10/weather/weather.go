@@ -23,7 +23,7 @@ func (wr *Resource) GetCityWeather(w http.ResponseWriter, r *http.Request) {
 	city := r.URL.Query().Get("city")
 
 	if city == "" {
-		log.Error().Msg("city is empty")
+		log.Error().Msg("City is empty")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -32,10 +32,12 @@ func (wr *Resource) GetCityWeather(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Error().Msg("Failed to get weather")
+		log.Error().Err(err).Msg("Failed to get weather")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		log.Error().Msg("Non OK status from weather")
@@ -52,7 +54,7 @@ func (wr *Resource) GetCityWeather(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewDecoder(resp.Body).Decode(&weather)
 	if err != nil {
-		log.Error().Msgf("cant decode weather %v", err)
+		log.Error().Err(err).Msg("cant decode weather.")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

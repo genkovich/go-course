@@ -27,7 +27,7 @@ func (t *Resource) Translate(w http.ResponseWriter, r *http.Request) {
 	var vars postBody
 	err := json.NewDecoder(r.Body).Decode(&vars)
 	if err != nil {
-		log.Error().Msg("Failed to decode request body")
+		log.Error().Err(err).Msg("Failed to decode request body")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -83,7 +83,7 @@ func (t *Resource) Translate(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewDecoder(resp.Body).Decode(&translations)
 	if err != nil {
-		log.Error().Msgf("cant decode translations %v", err)
+		log.Error().Err(err).Msg("cant decode translations")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
