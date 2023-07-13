@@ -1,28 +1,52 @@
 package main
 
 import (
-	"course/hw10/translator"
-	"course/hw10/weather"
-	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
-	"github.com/rs/zerolog/log"
-	"net/http"
+	"course/hw12/pkg"
+	userText "course/hw12/text"
+	"course/hw12/text/processing"
+	"fmt"
+	"os"
+)
+
+const (
+	ThirdPartyPath   = "./hw12/third_party/"
+	CountAllWords    = "count_all"
+	CountUniqueWords = "count_unique"
 )
 
 func main() {
-	err := godotenv.Load()
+	var filename string
 
+	fmt.Println("Enter filename")
+	fmt.Scanln(&filename)
+
+	fileContent, err := os.ReadFile(ThirdPartyPath + filename)
 	if err != nil {
-		log.Fatal().Msg("Error loading .env file")
+		fmt.Println("Error file reading")
+		return
 	}
 
-	r := mux.NewRouter()
+	options := map[string]string{
+		CountAllWords:    "Порахувати всі слова",
+		CountUniqueWords: "Порахувати унікальні слова",
+	}
 
-	weatherRes := &weather.Resource{}
-	transRes := &translator.Resource{}
+	err, pickedStrategy := pkg.PrintOptions("Оберіть варіант", options)
 
-	r.HandleFunc("/weather", weatherRes.GetCityWeather).Methods(http.MethodGet)
-	r.HandleFunc("/translate", transRes.Translate).Methods(http.MethodPost)
-	log.Info().Msg("Server starting..")
-	http.ListenAndServe(":8082", r)
+	var strategy processing.TextProcessor
+
+	switch pickedStrategy {
+	case CountAllWords:
+		strategy = &processing.CountWords{}
+	case CountUniqueWords:
+		strategy = &processing.CountUniqueWords{}
+	default:
+		strategy = &processing.CountWords{}
+	}
+
+	content := string(fileContent)
+
+	text := userText.CreateText(content, strategy)
+	fmt.Println(text.Process())
+
 }
