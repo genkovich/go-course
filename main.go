@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	ThirdPartyPath   = "./hw12/third_party/"
-	CountAllWords    = "count_all"
-	CountUniqueWords = "count_unique"
+	ThirdPartyPath = "./hw12/third_party/"
+	Count          = "count"
+	Remove         = "remove"
 )
 
 func main() {
@@ -27,8 +27,8 @@ func main() {
 	}
 
 	options := map[string]string{
-		CountAllWords:    "Порахувати всі слова",
-		CountUniqueWords: "Порахувати унікальні слова",
+		Count:  "Порахувати",
+		Remove: "Видалити",
 	}
 
 	err, pickedStrategy := pkg.PrintOptions("Оберіть варіант", options)
@@ -36,17 +36,39 @@ func main() {
 	var strategy processing.TextProcessor
 
 	switch pickedStrategy {
-	case CountAllWords:
-		strategy = &processing.CountWords{}
-	case CountUniqueWords:
-		strategy = &processing.CountUniqueWords{}
+	case Count:
+		strategy = &processing.Count{}
+	case Remove:
+		strategy = &processing.Remove{}
 	default:
-		strategy = &processing.CountWords{}
+		strategy = &processing.Count{}
 	}
 
 	content := string(fileContent)
 
-	text := userText.CreateText(content, strategy)
-	fmt.Println(text.Process())
+	targets := map[string]string{
+		"words":      "Слова",
+		"unique":     "Унікальні слова",
+		"whitespace": "Пробіли",
+		"end":        "Завершити",
+	}
 
+	text := userText.CreateText(content, strategy)
+
+	for {
+		err, pickedTarget := pkg.PrintOptions("Оберіть варіант", targets)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		if pickedTarget == "end" {
+			break
+		}
+
+		text.AddTarget(pickedTarget)
+
+		delete(targets, pickedTarget)
+	}
+
+	text.Process()
 }
