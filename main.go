@@ -1,37 +1,55 @@
 package main
 
 import (
-	"course/cw15"
-	"course/cw15/order"
+	"course/hw16/agent"
+	"course/hw16_2"
 	"fmt"
 )
 
-type LoggerObserver struct {
+type FirstSub struct {
+	id string
 }
 
-func (l LoggerObserver) GetNotified(subject any) {
-	fmt.Printf("logger_observer_notified: %s", subject)
+func (t *FirstSub) Consume(event any) {
+	fmt.Printf("FirstSub: %v \n", event)
 }
 
-func (l LoggerObserver) GetID() string {
-	return "logger"
+func (t *FirstSub) Id() string {
+	return t.id
 }
 
-func main2() {
-	observerRegistry := cw15.NewRegistry()
-	observerRegistry.Register(LoggerObserver{})
-
-	orderService := order.NewService(observerRegistry)
-
-	orderService.ProcessOrder()
-
+type SecondSub struct {
+	id string
 }
 
-//////////////////////////
+func (t *SecondSub) Consume(event any) {
+	fmt.Printf("SecondSub get event: %v \n", event)
+}
 
-type LoginSub struct {
+func (t *SecondSub) Id() string {
+	return t.id
 }
 
 func main() {
+	game := hw16_2.NewGame()
+	player1 := hw16_2.GamePlayer{Id: "1"}
+	player2 := hw16_2.GamePlayer{Id: "2"}
+	game.Add(&player1)
+	game.Add(&player2)
+	player1.Notify(game, "some changes")
+	player2.Notify(game, "another changes")
+	player3 := hw16_2.GamePlayer{Id: "3"}
+	game.Add(&player3)
+	player3.Notify(game, "third changes")
 
+	////////////
+	a := agent.NewAgent()
+
+	first := FirstSub{id: "1"}
+	a.AddSub(&first)
+
+	second := SecondSub{id: "2"}
+	a.AddSub(&second)
+
+	a.Watch()
 }
