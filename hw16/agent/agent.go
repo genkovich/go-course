@@ -9,7 +9,9 @@ import (
 
 type Sub interface {
 	Id() string
-	Consume(event any)
+	Consume()
+	Publish(event any)
+	Stop()
 }
 
 type Agent struct {
@@ -47,13 +49,17 @@ func (a *Agent) setup() {
 			select {
 			case event := <-a.watcher.Event:
 				for _, sub := range subscribers {
-					sub.Consume(event)
+					sub.Publish(event)
 				}
 			case sub := <-a.subscribers:
+				go sub.Consume()
 				subscribers[sub.Id()] = sub
 			case err := <-a.watcher.Error:
 				log.Fatalln(err)
 			case <-a.stop:
+				for _, sub := range subscribers {
+					sub.Stop()
+				}
 				a.stop <- struct{}{}
 				return
 			}

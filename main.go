@@ -7,27 +7,65 @@ import (
 )
 
 type FirstSub struct {
-	id string
+	id        string
+	eventChan chan any
+	stop      chan struct{}
 }
 
-func (t *FirstSub) Consume(event any) {
-	fmt.Printf("FirstSub: %v \n", event)
+func (f *FirstSub) Consume() {
+	for {
+		select {
+		case event := <-f.eventChan:
+			fmt.Printf("FirstSub: %v \n", event)
+		case <-f.stop:
+			f.stop <- struct{}{}
+			return
+		}
+	}
 }
 
-func (t *FirstSub) Id() string {
-	return t.id
+func (f *FirstSub) Publish(event any) {
+	f.eventChan <- event
+}
+
+func (f *FirstSub) Id() string {
+	return f.id
+}
+
+func (f *FirstSub) Stop() {
+	f.stop <- struct{}{}
+	<-f.stop
 }
 
 type SecondSub struct {
-	id string
+	id        string
+	eventChan chan any
+	stop      chan struct{}
 }
 
-func (t *SecondSub) Consume(event any) {
-	fmt.Printf("SecondSub get event: %v \n", event)
+func (s *SecondSub) Consume() {
+	for {
+		select {
+		case event := <-s.eventChan:
+			fmt.Printf("SecondSub get event: %v \n", event)
+		case <-s.stop:
+			s.stop <- struct{}{}
+			return
+		}
+	}
 }
 
-func (t *SecondSub) Id() string {
-	return t.id
+func (s *SecondSub) Publish(event any) {
+	s.eventChan <- event
+}
+
+func (s *SecondSub) Id() string {
+	return s.id
+}
+
+func (s *SecondSub) Stop() {
+	s.stop <- struct{}{}
+	<-s.stop
 }
 
 func main() {
@@ -45,10 +83,18 @@ func main() {
 	////////////
 	a := agent.NewAgent()
 
-	first := FirstSub{id: "1"}
+	first := FirstSub{
+		id:        "1",
+		eventChan: make(chan any),
+	}
+
 	a.AddSub(&first)
 
-	second := SecondSub{id: "2"}
+	second := SecondSub{
+		id:        "2",
+		eventChan: make(chan any),
+	}
+
 	a.AddSub(&second)
 
 	a.Watch()
