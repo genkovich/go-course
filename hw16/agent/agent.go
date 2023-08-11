@@ -9,9 +9,11 @@ import (
 
 type Sub interface {
 	Id() string
-	Consume()
+	Consume(event any)
 	Publish(event any)
 	Stop()
+	GetEventChan() chan any
+	GetStopChan() chan struct{}
 }
 
 type Agent struct {
@@ -52,7 +54,7 @@ func (a *Agent) setup() {
 					sub.Publish(event)
 				}
 			case sub := <-a.subscribers:
-				go sub.Consume()
+				go a.SubConsume(sub)
 				subscribers[sub.Id()] = sub
 			case err := <-a.watcher.Error:
 				log.Fatalln(err)
@@ -73,7 +75,18 @@ func (a *Agent) setup() {
 	for path, f := range a.watcher.WatchedFiles() {
 		fmt.Printf("%s: %s\n", path, f.Name())
 	}
+}
 
+func (a *Agent) SubConsume(sub Sub) {
+	for {
+		select {
+		case event := <-sub.GetEventChan():
+			sub.Consume(event)
+		case <-sub.GetStopChan():
+			sub.GetStopChan() <- struct{}{}
+			return
+		}
+	}
 }
 
 func (a *Agent) Watch() {

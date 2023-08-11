@@ -12,16 +12,16 @@ type FirstSub struct {
 	stop      chan struct{}
 }
 
-func (f *FirstSub) Consume() {
-	for {
-		select {
-		case event := <-f.eventChan:
-			fmt.Printf("FirstSub: %v \n", event)
-		case <-f.stop:
-			f.stop <- struct{}{}
-			return
-		}
-	}
+func (f *FirstSub) GetEventChan() chan any {
+	return f.eventChan
+}
+
+func (f *FirstSub) GetStopChan() chan struct{} {
+	return f.stop
+}
+
+func (f *FirstSub) Consume(event any) {
+	fmt.Printf("FirstSub: %v \n", event)
 }
 
 func (f *FirstSub) Publish(event any) {
@@ -43,16 +43,8 @@ type SecondSub struct {
 	stop      chan struct{}
 }
 
-func (s *SecondSub) Consume() {
-	for {
-		select {
-		case event := <-s.eventChan:
-			fmt.Printf("SecondSub get event: %v \n", event)
-		case <-s.stop:
-			s.stop <- struct{}{}
-			return
-		}
-	}
+func (s *SecondSub) Consume(event any) {
+	fmt.Printf("SecondSub get event: %v \n", event)
 }
 
 func (s *SecondSub) Publish(event any) {
@@ -66,6 +58,14 @@ func (s *SecondSub) Id() string {
 func (s *SecondSub) Stop() {
 	s.stop <- struct{}{}
 	<-s.stop
+}
+
+func (s *SecondSub) GetEventChan() chan any {
+	return s.eventChan
+}
+
+func (s *SecondSub) GetStopChan() chan struct{} {
+	return s.stop
 }
 
 func main() {
