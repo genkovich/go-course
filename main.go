@@ -1,37 +1,101 @@
 package main
 
 import (
-	"course/cw15"
-	"course/cw15/order"
+	"course/hw16/agent"
+	"course/hw16_2"
 	"fmt"
 )
 
-type LoggerObserver struct {
+type FirstSub struct {
+	id        string
+	eventChan chan any
+	stop      chan struct{}
 }
 
-func (l LoggerObserver) GetNotified(subject any) {
-	fmt.Printf("logger_observer_notified: %s", subject)
+func (f *FirstSub) GetEventChan() chan any {
+	return f.eventChan
 }
 
-func (l LoggerObserver) GetID() string {
-	return "logger"
+func (f *FirstSub) GetStopChan() chan struct{} {
+	return f.stop
 }
 
-func main2() {
-	observerRegistry := cw15.NewRegistry()
-	observerRegistry.Register(LoggerObserver{})
-
-	orderService := order.NewService(observerRegistry)
-
-	orderService.ProcessOrder()
-
+func (f *FirstSub) Consume(event any) {
+	fmt.Printf("FirstSub: %v \n", event)
 }
 
-//////////////////////////
+func (f *FirstSub) Publish(event any) {
+	f.eventChan <- event
+}
 
-type LoginSub struct {
+func (f *FirstSub) Id() string {
+	return f.id
+}
+
+func (f *FirstSub) Stop() {
+	f.stop <- struct{}{}
+	<-f.stop
+}
+
+type SecondSub struct {
+	id        string
+	eventChan chan any
+	stop      chan struct{}
+}
+
+func (s *SecondSub) Consume(event any) {
+	fmt.Printf("SecondSub get event: %v \n", event)
+}
+
+func (s *SecondSub) Publish(event any) {
+	s.eventChan <- event
+}
+
+func (s *SecondSub) Id() string {
+	return s.id
+}
+
+func (s *SecondSub) Stop() {
+	s.stop <- struct{}{}
+	<-s.stop
+}
+
+func (s *SecondSub) GetEventChan() chan any {
+	return s.eventChan
+}
+
+func (s *SecondSub) GetStopChan() chan struct{} {
+	return s.stop
 }
 
 func main() {
+	game := hw16_2.NewGame()
+	player1 := hw16_2.GamePlayer{Id: "1"}
+	player2 := hw16_2.GamePlayer{Id: "2"}
+	game.Add(&player1)
+	game.Add(&player2)
+	player1.Notify(game, "some changes")
+	player2.Notify(game, "another changes")
+	player3 := hw16_2.GamePlayer{Id: "3"}
+	game.Add(&player3)
+	player3.Notify(game, "third changes")
 
+	////////////
+	a := agent.NewAgent()
+
+	first := FirstSub{
+		id:        "1",
+		eventChan: make(chan any),
+	}
+
+	a.AddSub(&first)
+
+	second := SecondSub{
+		id:        "2",
+		eventChan: make(chan any),
+	}
+
+	a.AddSub(&second)
+
+	a.Watch()
 }
