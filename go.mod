@@ -15,6 +15,7 @@ require (
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mediocregopher/radix/v3 v3.8.1 // indirect
 	github.com/rs/zerolog v1.29.1 // indirect
+	github.com/streadway/amqp v1.1.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898 // indirect
 )
